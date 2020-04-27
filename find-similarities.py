@@ -30,6 +30,9 @@ app.config['DEBUG'] = True
 
 # globals
 VECTOR_SIZE = 512
+g_df_docs = None
+g_data_file = None
+
 default_use_model = 'https://tfhub.dev/google/universal-sentence-encoder-large/3?tf-hub-format=compressed'
 default_csv_file_path = './short-wiki.csv'
 model_indexes_path = './model-indexes/'
@@ -193,6 +196,7 @@ def predict(params):
   stop_words = False
 
   input_sentence_id = None
+  filter_values = []
 
   try:
     if params:
@@ -210,6 +214,8 @@ def predict(params):
         k = params.get('k')
       if params.get('stop_words'):
         stop_words = params.get('stop_words')
+      if params.get('filter_values'):
+        filter_values = params.get('filter_values')
 
     if len(input_sentence_id) <= 0:
       print_with_time('Input Sentence Id: {}'.format(input_sentence_id))
@@ -264,10 +270,17 @@ def predict(params):
     similar_sentences = []
     similarities = [content_array[nn] for nn in nns]
     for sentence in similarities[1:]:
-      similar_sentences.append({
-        'guid': sentence[0],
-        'content': sentence[1]
-      })
+      if len(filter_values) > 0:
+        if sentence[2].lower() in filter_values:
+          similar_sentences.append({
+            'guid': sentence[0],
+            'content': sentence[1]
+          })
+      else:
+        similar_sentences.append({
+          'guid': sentence[0],
+          'content': sentence[1]
+        })
       print(sentence[0])
 
     result = SimilarityResult(input_sentence_id, input_sentence.values[0], similar_sentences)
@@ -422,15 +435,15 @@ def print_with_time(msg):
   sys.stdout.flush()
 
 def read_data(path):
-  df_docs = None
+  global g_df_docs, g_data_file
+  if g_df_docs is None or path != g_data_file:
+    try:
+      g_df_docs = pd.read_csv(path, usecols=['GUID', 'CONTENT', 'ENTITY'])
+    except Exception as e:
+        print('Exception in read_data: {0}'.format(e))
+        raise
 
-  try:
-    df_docs = pd.read_csv(path, usecols=['GUID', 'CONTENT', 'ENTITY'])
-  except Exception as e:
-      print('Exception in read_data: {0}'.format(e))
-      raise
-
-  return df_docs
+  return g_df_docs
 
 def build_index(annoy_vector_dimension, embedding_fun, batch_size, sentences, content_array, stop_words):
   ann = AnnoyIndex(annoy_vector_dimension, metric='angular')
