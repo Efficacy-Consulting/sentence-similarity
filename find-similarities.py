@@ -293,7 +293,7 @@ def search(params):
 
         similar_sentences = []
         similarities = [content_array[nn] for nn in nns]
-        for sentence in similarities[1:]:
+        for sentence in similarities:
             if len(filter_values) > 0:
                 if sentence[2].lower() in filter_values:
                     similar_sentences.append({
