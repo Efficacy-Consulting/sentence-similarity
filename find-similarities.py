@@ -80,6 +80,13 @@ def train_model():
     return json.dumps(result)
 
 
+@app.route('/search', methods=['GET', 'POST'])
+def search_string():
+    params = request.get_json()
+    result = search(params)
+    return json.dumps(result, cls=SimilarityResultEncoder)
+
+
 @app.route('/similarity', methods=['POST'])
 def predict_sentence():
     params = request.get_json()
@@ -190,6 +197,121 @@ def train(params):
 
     except Exception as e:
         print('Exception in read_data: {0}'.format(e))
+        result = {
+            'error': 'Failure'
+        }
+
+    return result
+
+
+def search(params):
+    result = {}
+
+    print('Search', params)
+
+    annoy_vector_dimension = VECTOR_SIZE
+    index_filename = default_index_file
+
+    data_file = default_csv_file_path
+    use_model = default_use_model
+    k = default_k
+    stop_words = False
+
+    input_search_string = None
+    filter_values = []
+
+    try:
+        if params:
+            if params.get('search_string'):
+                input_search_string = params.get('search_string')
+            if params.get('vector_size'):
+                annoy_vector_dimension = params.get('vector_size')
+            if params.get('index_filename'):
+                index_filename = params.get('index_filename')
+            if params.get('data_file'):
+                data_file = params.get('data_file')
+            if params.get('use_model'):
+                use_model = params.get('use_model')
+            if params.get('k'):
+                k = params.get('k')
+            if params.get('stop_words'):
+                stop_words = params.get('stop_words')
+            if params.get('filter_values'):
+                filter_values = params.get('filter_values')
+
+        if len(input_search_string) <= 0:
+            print_with_time(
+                'Search String: {}'.format(input_search_string))
+            result = {
+                'error': 'Invalid Input Search String'
+            }
+            return result
+
+        start_time = time.time()
+        annoy_index = AnnoyIndex(annoy_vector_dimension, metric='angular')
+        annoy_index.load(model_indexes_path + index_filename)
+        end_time = time.time()
+        print_with_time(
+            'Annoy Index load time: {}'.format(end_time-start_time))
+
+        start_time = time.time()
+        data_frame = read_data(data_file)
+        content_array = data_frame.to_numpy()
+        end_time = time.time()
+        print_with_time(
+            'Time to read data file: {}'.format(end_time-start_time))
+
+        start_time = time.time()
+        embed_func = hub.Module(use_model)
+        end_time = time.time()
+        print_with_time('Load the module: {}'.format(end_time-start_time))
+
+        start_time = time.time()
+        sentences = tf.compat.v1.placeholder(dtype=tf.string, shape=[None])
+        embedding = embed_func(sentences)
+        end_time = time.time()
+        print_with_time(
+            'Init sentences embedding: {}'.format(end_time-start_time))
+
+        start_time = time.time()
+        sess = tf.compat.v1.Session()
+        sess.run([tf.compat.v1.global_variables_initializer(),
+                  tf.compat.v1.tables_initializer()])
+        end_time = time.time()
+        print_with_time(
+            'Time to create session: {}'.format(end_time-start_time))
+
+        if stop_words:
+            input_search_string = remove_stopwords(input_search_string)
+
+        start_time = time.time()
+        sentence_vector = sess.run(embedding, feed_dict={
+                                   sentences: [input_search_string]})
+        nns = annoy_index.get_nns_by_vector(sentence_vector[0], k)
+        end_time = time.time()
+        print_with_time('nns done: Time: {}'.format(end_time-start_time))
+
+        similar_sentences = []
+        similarities = [content_array[nn] for nn in nns]
+        for sentence in similarities[1:]:
+            if len(filter_values) > 0:
+                if sentence[2].lower() in filter_values:
+                    similar_sentences.append({
+                        'guid': sentence[0],
+                        'content': sentence[1]
+                    })
+            else:
+                similar_sentences.append({
+                    'guid': sentence[0],
+                    'content': sentence[1]
+                })
+            print(sentence[0])
+
+        result = SimilarityResult(
+            '000', input_search_string, similar_sentences)
+
+    except Exception as e:
+        print('Exception in predict: {0}'.format(e))
         result = {
             'error': 'Failure'
         }
