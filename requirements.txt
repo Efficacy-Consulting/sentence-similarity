@@ -3,3 +3,5 @@ tensorflow
 tensorflow_hub
 numpy
 pandas
+flask
+tinydb
