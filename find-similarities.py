@@ -21,8 +21,6 @@ from annoy import AnnoyIndex
 
 from gensim.parsing.preprocessing import remove_stopwords
 
-from tinydb import TinyDB, Query
-
 app = Flask(__name__)
 cors = CORS(app, resources={r"/*": {"origins": "*"}})
 
@@ -32,11 +30,12 @@ app.config['DEBUG'] = True
 VECTOR_SIZE = 512
 g_df_docs = None
 g_data_file = None
+g_sentence_similarity = None
 
 default_use_model = 'https://tfhub.dev/google/universal-sentence-encoder-large/3?tf-hub-format=compressed'
-default_csv_file_path = 'short-wiki.csv'
-model_indexes_path = 'model-indexes/'
-model_index_reference_file = 'index.json'
+default_csv_file_path = './short-wiki.csv'
+model_indexes_path = './model-indexes/'
+model_index_reference_file = 'sentence-similarity.json'
 default_index_file = 'wiki.annoy.index'
 default_index_filepath = model_indexes_path + default_index_file
 default_k = 10
@@ -106,21 +105,39 @@ def predictv2_sentence():
 # methods called from the APIs
 
 
-def get_index_files():
-    result = None
+def read_to_sentence_similarity_dict():
     try:
-        indexDb = TinyDB(model_indexes_path + model_index_reference_file)
-        records = Query()
-
-        result = indexDb.all()
-
-        # for root, dirs, files in os.walk(model_indexes_path):
-        #   for file in files:
-        #     print(os.path.join(root, file))
-        #     files.append(file)
+        global g_sentence_similarity
+        if(g_sentence_similarity == None):
+            with open(model_indexes_path + model_index_reference_file, 'r') as json_file:
+                g_sentence_similarity = json.load(json_file)
 
     except Exception as e:
-        print('Exception in read_data: {0}'.format(e))
+        print('Exception in read_to_sentence_similarity_dict: {0}'.format(e))
+        g_sentence_similarity = {}
+
+
+def write_to_sentence_similarity_file():
+    try:
+        global g_sentence_similarity
+        if(g_sentence_similarity != None):
+            with open(model_indexes_path + model_index_reference_file, 'w+') as json_file:
+                json.dump(g_sentence_similarity, json_file, indent=2)
+
+    except Exception as e:
+        print('Exception in write_to_sentence_similarity_file: {0}'.format(e))
+        raise
+
+
+def get_index_files():
+    result = None
+
+    try:
+        read_to_sentence_similarity_dict()
+        result = list(g_sentence_similarity.values())
+
+    except Exception as e:
+        print('Exception in get_index_files: {0}'.format(e))
         result = {
             'error': 'Failure in get_index_files' + e.message
         }
@@ -185,21 +202,23 @@ def train(params):
         ann.build(num_trees)
         ann.save(model_indexes_path + index_filename)
 
-        indexDb = TinyDB(model_indexes_path + model_index_reference_file)
-        records = Query()
-        record = indexDb.search(records.index_filename == index_filename)
-        if(len(record) > 0):
-            indexDb.remove(records.index_filename == index_filename)
+        read_to_sentence_similarity_dict()
+        if(g_sentence_similarity.get(index_filename) != None):
+            g_sentence_similarity.pop(index_filename, None)
 
-        indexDb.insert({'model_name': model_name, 'data_file': data_file, 'index_filename': index_filename,
-                        'use_model': use_model, 'vector_size': annoy_vector_dimension, 'stop_words': stop_words})
+        g_sentence_similarity[index_filename] = {
+            'model_name': model_name, 'data_file': data_file,
+            'index_filename': index_filename, 'use_model': use_model,
+            'vector_size': annoy_vector_dimension, 'stop_words': stop_words
+        }
+        write_to_sentence_similarity_file()
 
         result = {
             'message': 'Training successful'
         }
 
     except Exception as e:
-        print('Exception in read_data: {0}'.format(e))
+        print('Exception in train: {0}'.format(e))
         result = {
             'error': 'Failure in training'
         }
