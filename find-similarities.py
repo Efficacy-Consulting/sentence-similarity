@@ -68,6 +68,7 @@ def home():
 
 @app.route('/get-model-indexes', methods=['GET'])
 def get_model_indexes():
+    print('get_model_indexes')
     result = get_index_files()
     return json.dumps(result)
 
@@ -75,6 +76,7 @@ def get_model_indexes():
 @app.route('/train', methods=['GET', 'POST'])
 def train_model():
     params = request.get_json()
+    print('train_model', params)
     result = train(params)
     return json.dumps(result)
 
@@ -82,6 +84,7 @@ def train_model():
 @app.route('/search', methods=['GET', 'POST'])
 def search_string():
     params = request.get_json()
+    print('search_string', params)
     result = search(params)
     return json.dumps(result, cls=SimilarityResultEncoder)
 
@@ -136,7 +139,7 @@ def get_index_files():
     except Exception as e:
         print('Exception in get_index_files: {0}'.format(e))
         result = {
-            'error': 'Failure'
+            'error': 'Failure in get_index_files' + e.message
         }
 
     return result
@@ -217,7 +220,7 @@ def train(params):
     except Exception as e:
         print('Exception in train: {0}'.format(e))
         result = {
-            'error': 'Failure'
+            'error': 'Failure in training'
         }
 
     return result
@@ -332,7 +335,7 @@ def search(params):
     except Exception as e:
         print('Exception in predict: {0}'.format(e))
         result = {
-            'error': 'Failure'
+            'error': 'Failure in search'
         }
 
     return result
@@ -451,7 +454,7 @@ def predict(params):
     except Exception as e:
         print('Exception in predict: {0}'.format(e))
         result = {
-            'error': 'Failure'
+            'error': 'Failure in predict'
         }
 
     return result
@@ -536,9 +539,9 @@ def predict2(params):
         result = SimilarityResult(
             input_sentence_id, input_sentence.values[0], similar_sentences)
     except Exception as e:
-        print('Exception in predict: {0}'.format(e))
+        print('Exception in predict2: {0}'.format(e))
         result = {
-            'error': 'Failure'
+            'error': 'Failure in predict2'
         }
 
     return result
@@ -665,4 +668,4 @@ def build_index(annoy_vector_dimension, embedding_fun, batch_size, sentences, co
 
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=1975)
+    app.run(host='0.0.0.0', port=1975, debug=True)

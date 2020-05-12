@@ -1,3 +1,5 @@
+[![Sentence Similarity Video](SentenceSimilarity.gif)](https://youtu.be/hM_OoNOE698 "Sentence Similarity Video")
+
 # sentence-similarity
 Short wikipedia articles lookup using Google's USE (Universal Sentence Encoder) and Annoy (Approximate Nearest Neighbors Oh Yeah).
 
