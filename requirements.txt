@@ -5,5 +5,5 @@ numpy
 pandas
 flask
 flask_cors
-tinydb
 gensim
+boto3
