@@ -55,6 +55,10 @@ I started to create (short-wiki.csv) a short intro on some of the articles (sour
 ## Note
 As you have noticed, there are no error handlings
 
+## Docker Compose
+  `docker-compose build`: build the container
+  `docker-compose up`: bring it up
+
 ## References
 https://jaganlal.github.io/wiki-use-annoy
 

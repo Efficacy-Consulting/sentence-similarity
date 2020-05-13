@@ -203,7 +203,7 @@ def train(params):
     except Exception as e:
         print('Exception in train: {0}'.format(e))
         result = {
-            'error': 'Failure in training'
+            'error': 'Exception in train: {0}'.format(e)
         }
 
     return result
@@ -316,9 +316,9 @@ def search(params):
             '000', input_search_string, similar_sentences)
 
     except Exception as e:
-        print('Exception in predict: {0}'.format(e))
+        print('Exception in search: {0}'.format(e))
         result = {
-            'error': 'Failure in search'
+            'error': 'Exception in search: {0}'.format(e)
         }
 
     return result
@@ -437,7 +437,7 @@ def predict(params):
     except Exception as e:
         print('Exception in predict: {0}'.format(e))
         result = {
-            'error': 'Failure in predict'
+            'error': 'Exception in predict: {0}'.format(e)
         }
 
     return result
@@ -524,7 +524,7 @@ def predict2(params):
     except Exception as e:
         print('Exception in predict2: {0}'.format(e))
         result = {
-            'error': 'Failure in predict2'
+            'error': 'Exception in predict2: {0}'.format(e)
         }
 
     return result
