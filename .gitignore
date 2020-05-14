@@ -1,6 +1,9 @@
 use-large-3
+model-indexes
 model-indexes/*
 model-indexes/*.index
+./model-indexes/*
+./model-indexes/*.index
 playground/
 
 
