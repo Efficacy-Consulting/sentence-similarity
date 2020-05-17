@@ -2,17 +2,17 @@ version: '3.4'
 services:
   python: #docker run -it -v ${PWD}:/work -w /work -p 1975:1975 sentence-similarity:1.0.0 /bin/sh
     container_name: sentence-similarity
-    image: sentence-similarity:1.0.0
+    image: sentence-similarity-debug:1.0.0
     build:
-      context: ./
-      # target: debug          #comment out for build.target:debug
-      target: prod
-      # working_dir: /work      #comment out for build.target:prod
-      # entrypoint: /bin/sh     #comment out for build.target:prod
-      # stdin_open: true        #comment out for build.target:prod
-      # tty: true               #comment out for build.target:prod
+      context: ./app
+      target: debug          #comment out for build.target:debug
+    # target: prod
+    # working_dir: /work      #comment out for build.target:prod
+    # entrypoint: /bin/sh     #comment out for build.target:prod
+    # stdin_open: true        #comment out for build.target:prod
+    # tty: true               #comment out for build.target:prod
     volumes:
-    - .:/work
+    - ./app/src/:/work
     ports:
       - 1975:1975
       - 5678:5678

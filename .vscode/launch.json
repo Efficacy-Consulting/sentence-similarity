@@ -10,7 +10,7 @@
       "request": "attach",
       "pathMappings": [
           {
-              "localRoot": "${workspaceFolder}/",
+              "localRoot": "${workspaceFolder}/app/src/",
               "remoteRoot": "/work",
               "console": "integratedTerminal"
           }

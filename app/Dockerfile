@@ -3,10 +3,10 @@ FROM python:3.7 as base
 RUN mkdir /work/
 WORKDIR /work/
 
-COPY ./requirements.txt /work/requirements.txt
+COPY ./src/requirements.txt /work/requirements.txt
 RUN pip install -r requirements.txt
 
-COPY ./find-similarities.py /work/
+COPY ./src/ /work/
 
 ENV FLASK_APP=find-similarities.py
 
