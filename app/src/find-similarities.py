@@ -183,6 +183,11 @@ def train(params):
         print('Build Index Time: {}'.format(end_time - start_time))
 
         ann.build(num_trees)
+
+        # create model_indexes folder if it doesn't exist
+        if not os.path.exists(model_indexes_path):
+            os.makedirs(model_indexes_path)
+
         save_index(ann, model_indexes_path + index_filename)
 
         sentence_similarity_dict = get_sentence_similarity_dict()

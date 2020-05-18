@@ -5,7 +5,23 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "Python: Current File",
+      "name":"Python: Flask",
+      "type":"python",
+      "request":"launch",
+      "module":"flask",
+      "env":{
+        "FLASK_APP":"app/src/find-similarities.py",
+        "FLASK_ENV":"development",
+        "FLASK_DEBUG":"0"
+      },
+      "args":[
+        "run","--no-debugger",
+        "--no-reload",
+        "--port=1975"],
+      "jinja":true
+    },
+    {
+      "name": "Python: Docker File",
       "type": "python",
       "request": "attach",
       "pathMappings": [

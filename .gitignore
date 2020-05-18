@@ -5,6 +5,7 @@ model-indexes/*.index
 ./model-indexes/*
 ./model-indexes/*.index
 playground/
+*.csv
 
 
 # Byte-compiled / optimized / DLL files
