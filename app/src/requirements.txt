@@ -1,5 +1,5 @@
 annoy == 1.16.3
-tensorflow == 1.15.0
+tensorflow == 1.15.2
 tensorflow_hub == 0.7.0
 numpy == 1.18.1
 pandas == 1.0.1
