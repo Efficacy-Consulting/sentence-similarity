@@ -137,6 +137,7 @@ def train(params):
     index_filename = default_index_file
 
     data_file = default_csv_file_path
+    data_file_updated = False
     use_model = default_use_model
     num_trees = default_num_trees
     model_name = index_filename
@@ -151,6 +152,8 @@ def train(params):
                 model_name = index_filename
             if params.get('data_file'):
                 data_file = params.get('data_file')
+            if params.get('data_file_updated'):
+                data_file_updated = params.get('data_file_updated')
             if params.get('use_model'):
                 use_model = params.get('use_model')
             if params.get('model_name'):
@@ -171,7 +174,7 @@ def train(params):
             'Init sentences embedding: {}'.format(end_time-start_time))
 
         start_time = time.time()
-        data_frame = read_data(data_file)
+        data_frame = read_data(data_file, data_file_updated)
         content_array = data_frame.to_numpy()
         end_time = time.time()
         print('Read Data Time: {}'.format(end_time - start_time))
@@ -223,7 +226,9 @@ def search(params):
     index_filename = default_index_file
 
     data_file = default_csv_file_path
+    data_file_updated = False
     use_model = default_use_model
+    use_updated_model = False
     k = default_k
     stop_words = False
 
@@ -240,8 +245,12 @@ def search(params):
                 index_filename = params.get('index_filename')
             if params.get('data_file'):
                 data_file = params.get('data_file')
+            if params.get('data_file_updated'):
+                data_file_updated = params.get('data_file_updated')
             if params.get('use_model'):
                 use_model = params.get('use_model')
+            if params.get('use_updated_model'):
+                use_updated_model = params.get('use_updated_model')
             if params.get('k'):
                 k = params.get('k')
             if params.get('stop_words'):
@@ -259,13 +268,14 @@ def search(params):
 
         start_time = time.time()
         annoy_index = AnnoyIndex(annoy_vector_dimension, metric='angular')
-        load_index(annoy_index, model_indexes_path + index_filename)
+        load_index(annoy_index, model_indexes_path +
+                   index_filename, use_updated_model)
         end_time = time.time()
         print_with_time(
             'Annoy Index load time: {}'.format(end_time-start_time))
 
         start_time = time.time()
-        data_frame = read_data(data_file)
+        data_frame = read_data(data_file, data_file_updated)
         content_array = data_frame.to_numpy()
         end_time = time.time()
         print_with_time(
@@ -338,7 +348,9 @@ def predict(params):
     index_filename = default_index_file
 
     data_file = default_csv_file_path
+    data_file_updated = False
     use_model = default_use_model
+    use_updated_model = False
     k = default_k
     stop_words = False
 
@@ -355,8 +367,12 @@ def predict(params):
                 index_filename = params.get('index_filename')
             if params.get('data_file'):
                 data_file = params.get('data_file')
+            if params.get('data_file_updated'):
+                data_file_updated = params.get('data_file_updated')
             if params.get('use_model'):
                 use_model = params.get('use_model')
+            if params.get('use_updated_model'):
+                use_updated_model = params.get('use_updated_model')
             if params.get('k'):
                 k = params.get('k')
             if params.get('stop_words'):
@@ -373,13 +389,14 @@ def predict(params):
 
         start_time = time.time()
         annoy_index = AnnoyIndex(annoy_vector_dimension, metric='angular')
-        load_index(annoy_index, model_indexes_path + index_filename)
+        load_index(annoy_index, model_indexes_path +
+                   index_filename, use_updated_model)
         end_time = time.time()
         print_with_time(
             'Annoy Index load time: {}'.format(end_time-start_time))
 
         start_time = time.time()
-        data_frame = read_data(data_file)
+        data_frame = read_data(data_file, data_file_updated)
         content_array = data_frame.to_numpy()
         end_time = time.time()
         print_with_time(
@@ -457,6 +474,7 @@ def predict2(params):
     index_filename = default_index_file
 
     data_file = default_csv_file_path
+    data_file_updated = False
     use_model = default_use_model
     k = default_k
 
@@ -472,6 +490,8 @@ def predict2(params):
                 index_filename = params.get('index_filename')
             if params.get('data_file'):
                 data_file = params.get('data_file')
+            if params.get('data_file_updated'):
+                data_file_updated = params.get('data_file_updated')
             if params.get('use_model'):
                 use_model = params.get('use_model')
             if params.get('k'):
@@ -485,7 +505,7 @@ def predict2(params):
             return result
 
         start_time = time.time()
-        data_frame = read_data(data_file)
+        data_frame = read_data(data_file, data_file_updated)
         # content_array = data_frame.to_numpy()
         end_time = time.time()
         print_with_time(
@@ -598,9 +618,9 @@ def print_with_time(msg):
     sys.stdout.flush()
 
 
-def read_data(path):
+def read_data(path, force_download):
     if(g_source_type == 'aws'):
-        download_from_s3(path)
+        download_from_s3(path, force_download)
 
     global g_df_docs, g_data_file
     if g_df_docs is None or path != g_data_file:
@@ -665,9 +685,9 @@ def save_index(ann, file_name):
         upload_to_s3(file_name)
 
 
-def load_index(annoy_index, file_name):
+def load_index(annoy_index, file_name, force_download):
     if(g_source_type == 'aws'):
-        download_from_s3(file_name)
+        download_from_s3(file_name, force_download)
 
     annoy_index.load(file_name)
 
@@ -717,13 +737,20 @@ def upload_to_s3(file_name, object_name=None):
     return True
 
 
-def download_from_s3(file_name, object_name=None):
+def download_from_s3(file_name, force_download, object_name=None):
     """Download a file from an S3 bucket
 
     :param file_name: File to download
     :param object_name: S3 object name. If not specified then file_name is used
     :return: True if file was downloaded, else False
     """
+
+    if os.path.exists(file_name) and force_download == False:
+        return True
+
+    # create model_indexes folder if it doesn't exist
+    if not os.path.exists(model_indexes_path):
+        os.makedirs(model_indexes_path)
 
     # If S3 object_name was not specified, use file_name
     if object_name is None:
