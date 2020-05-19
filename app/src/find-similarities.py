@@ -317,13 +317,13 @@ def search(params):
             if len(filter_values) > 0:
                 if sentence[2].lower() in filter_values:
                     similar_sentences.append({
-                        'guid': sentence[0],
-                        'content': sentence[1]
+                        'guid': sentence[1],
+                        'content': sentence[3]
                     })
             else:
                 similar_sentences.append({
-                    'guid': sentence[0],
-                    'content': sentence[1]
+                    'guid': sentence[1],
+                    'content': sentence[3]
                 })
             print(sentence[0])
 
@@ -626,7 +626,7 @@ def read_data(path, force_download):
     if g_df_docs is None or path != g_data_file:
         try:
             g_df_docs = pd.read_csv(
-                path, usecols=['GUID', 'CONTENT', 'ENTITY'])
+                path, usecols=['id', 'title', 'publication', 'content'])
             g_data_file = path
         except Exception as e:
             print('Exception in read_data: {0}'.format(e))
@@ -647,7 +647,7 @@ def build_index(annoy_vector_dimension, embedding_fun, batch_size, sentences, co
         sess.run([tf.compat.v1.global_variables_initializer(),
                   tf.compat.v1.tables_initializer()])
         for sindex, sentence in enumerate(content_array):
-            content = sentence[1]
+            content = sentence[3]
             if stop_words:
                 content = remove_stopwords(sentence[1])
 
@@ -818,9 +818,10 @@ def write_sentence_similarity_to_aws_s3(sentence_similarity):
 
 
 def read_sentence_similarity_from_file():
-    sentence_similarity = {}
+    sentence_similarity = None
     try:
-        if(sentence_similarity == None):
+        global g_sentence_similarity
+        if(g_sentence_similarity == None):
             with open(model_indexes_path + model_index_reference_file, 'r') as json_file:
                 sentence_similarity = json.load(json_file)
 
@@ -828,6 +829,7 @@ def read_sentence_similarity_from_file():
         print('Exception in read_sentence_similarity_from_file: {0}'.format(e))
         sentence_similarity = {}
 
+    g_sentence_similarity = sentence_similarity
     return sentence_similarity
 
 
