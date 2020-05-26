@@ -231,8 +231,6 @@ def search(params):
           'sourceSentence': input_search_string,
           'similarDocs': similar_sentences
       }
-        # result = SimilarityResult(
-            # '000', input_search_string, similar_sentences)
 
   except Exception as e:
     print('Exception in search: {0}'.format(e))
@@ -337,9 +335,6 @@ def predict(params):
         'sourceSentence': input_sentence.values[0],
         'similarDocs': similar_sentences
       }
-
-      # result = SimilarityResult(
-      #     input_sentence_id, input_sentence.values[0], similar_sentences)
 
   except Exception as e:
     print('Exception in predict: {0}'.format(e))
