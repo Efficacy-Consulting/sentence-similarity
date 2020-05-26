@@ -14,17 +14,11 @@ from app.src.aws_s3 import download_from_s3, upload_to_s3, read_sentence_similar
 
 from app.src.get_index_files import get_index_files
 
-<<<<<<< HEAD
-import boto3
-from io import StringIO, BytesIO
-
-=======
 from app.src.doc_indexing import create_index, load_index
 from app.src.search import search_query
 from app.src.find_similar_docs import find_similar_document
 
 
->>>>>>> feat(split by functionalities: get_index_files): #6 - WIP v2. Needs more testing
 app = Flask(__name__)
 cors = CORS(app, resources={r"/*": {"origins": "*"}})
 
@@ -45,10 +39,6 @@ g_content_key = 'CONTENT'
 g_df_docs = None
 g_data_file = None
 g_sentence_similarity = None
-# 'local', 'aws'
-g_source_type = 'aws'
-g_s3_sentence_similarity_file = 'model-indexes/sentence-similarity.json'
-g_s3_connection = None
 
 default_use_model = 'https://tfhub.dev/google/universal-sentence-encoder-large/3?tf-hub-format=compressed'
 default_csv_file_path = 'short-wiki.csv'
@@ -93,26 +83,6 @@ def predict_sentence():
 
 # methods called from the APIs
 
-<<<<<<< HEAD
-
-def get_index_files():
-    result = None
-
-    try:
-        sentence_similarity_dict = get_sentence_similarity_dict()
-        result = list(sentence_similarity_dict.values())
-
-    except Exception as e:
-        print('Exception in get_index_files: {0}'.format(e))
-        result = {
-            'error': 'Failure in get_index_files' + e.message
-        }
-
-    return result
-
-
-=======
->>>>>>> feat(split by functionalities: get_index_files): #6 - WIP v2. Needs more testing
 def train(params):
   result = {}
 
@@ -380,79 +350,6 @@ def predict(params):
   return result
 
 def read_data(path, force_download):
-<<<<<<< HEAD
-    if(g_source_type == 'aws'):
-        download_from_s3(path, force_download)
-
-    global g_df_docs, g_data_file
-    if g_df_docs is None or path != g_data_file:
-        try:
-            g_df_docs = pd.read_csv(
-                path, usecols=['GUID', 'CONTENT', 'ENTITY'])
-            g_data_file = path
-        except Exception as e:
-            print('Exception in read_data: {0}'.format(e))
-            raise
-
-    return g_df_docs
-
-
-def build_index(annoy_vector_dimension, embedding_fun, batch_size, sentences, content_array, stop_words):
-    ann = AnnoyIndex(annoy_vector_dimension, metric='angular')
-    batch_sentences = []
-    batch_indexes = []
-    last_indexed = 0
-    num_batches = 0
-    content = ''
-
-    with tf.compat.v1.Session() as sess:
-        sess.run([tf.compat.v1.global_variables_initializer(),
-                  tf.compat.v1.tables_initializer()])
-        for sindex, sentence in enumerate(content_array):
-            content = sentence[1]
-            if stop_words:
-                content = remove_stopwords(sentence[1])
-
-            batch_sentences.append(content)
-            batch_indexes.append(sindex)
-
-            if len(batch_sentences) == batch_size:
-                context_embed = sess.run(embedding_fun, feed_dict={
-                                         sentences: batch_sentences})
-
-                for index in batch_indexes:
-                    ann.add_item(index, context_embed[index - last_indexed])
-                    batch_sentences = []
-                    batch_indexes = []
-
-                last_indexed += batch_size
-                if num_batches % 10000 == 0:
-                    print_with_time('sindex: {} annoy_size: {}'.format(
-                        sindex, ann.get_n_items()))
-
-                num_batches += 1
-
-        if batch_sentences:
-            context_embed = sess.run(embedding_fun, feed_dict={
-                                     sentences: batch_sentences})
-            for index in batch_indexes:
-                ann.add_item(index, context_embed[index - last_indexed])
-
-    return ann
-
-
-def save_index(ann, file_name):
-    ann.save(file_name)
-    if(g_source_type == 'aws'):
-        upload_to_s3(file_name)
-
-
-def load_index(annoy_index, file_name, force_download):
-    if(g_source_type == 'aws'):
-        download_from_s3(file_name, force_download)
-
-    annoy_index.load(file_name)
-=======
   if(get_source_type() == 'aws'):
     download_from_s3(path, force_download)
 
@@ -464,159 +361,8 @@ def load_index(annoy_index, file_name, force_download):
     except Exception as e:
       print('Exception in read_data: {0}'.format(e))
       raise
->>>>>>> feat(split by functionalities: get_index_files): #6 - WIP v2. Needs more testing
 
   return g_df_docs
-
-def get_sentence_similarity_dict():
-    global g_sentence_similarity
-    if(g_sentence_similarity == None):
-        if(g_source_type == 'aws'):
-            g_sentence_similarity = read_sentence_similarity_from_aws_s3()
-        else:
-            g_sentence_similarity = read_sentence_similarity_from_file()
-
-    return g_sentence_similarity
-
-
-def put_sentence_similarity_dict(sentence_similarity):
-    if(g_source_type == 'aws'):
-        write_sentence_similarity_to_aws_s3(sentence_similarity)
-    else:
-        write_to_sentence_similarity_file(sentence_similarity)
-
-    global g_sentence_similarity
-    g_sentence_similarity = sentence_similarity
-
-
-def upload_to_s3(file_name, object_name=None):
-    """Upload a file to an S3 bucket
-
-    :param file_name: File to upload
-    :param object_name: S3 object name. If not specified then file_name is used
-    :return: True if file was uploaded, else False
-    """
-
-    # If S3 object_name was not specified, use file_name
-    if object_name is None:
-        object_name = file_name
-
-    # Upload the file
-    s3_client = get_s3_connection()
-    try:
-        response = s3_client.upload_file(
-            file_name, get_s3_bucket(), object_name)
-    except Exception as e:
-        print('Exception in upload_to_s3: {0} for {1} file'.format(
-            e, file_name))
-        return False
-    return True
-
-
-def download_from_s3(file_name, force_download, object_name=None):
-    """Download a file from an S3 bucket
-
-    :param file_name: File to download
-    :param object_name: S3 object name. If not specified then file_name is used
-    :return: True if file was downloaded, else False
-    """
-
-    if os.path.exists(file_name) and force_download == False:
-        return True
-
-    # create model_indexes folder if it doesn't exist
-    if not os.path.exists(model_indexes_path):
-        os.makedirs(model_indexes_path)
-
-    # If S3 object_name was not specified, use file_name
-    if object_name is None:
-        object_name = file_name
-
-    # Upload the file
-    s3_client = get_s3_connection()
-    try:
-        response = s3_client.download_file(
-            get_s3_bucket(), object_name, file_name)
-    except Exception as e:
-        print('Exception in download_from_s3: {0} for {1} file'.format(
-            e, file_name))
-        return False
-    return True
-
-
-def get_s3_connection():
-    global g_s3_connection
-    s3_connection = g_s3_connection
-    if(s3_connection == None):
-        try:
-            # connect to s3
-            s3_connection = boto3.client('s3', aws_access_key_id='',
-                                         aws_secret_access_key='')
-            g_s3_connection = s3_connection
-        except Exception as e:
-            print('Exception in get_s3: {0}'.format(e))
-
-    return s3_connection
-
-
-def get_s3_bucket():
-    return 'sentence-similarity-data.s3.us-east-1.amazonaws.com'
-
-
-def read_sentence_similarity_from_aws_s3():
-    sentence_similarity = {}
-    try:
-        s3 = get_s3_connection()
-        obj = s3.get_object(
-            Bucket=get_s3_bucket(), Key=g_s3_sentence_similarity_file)
-
-        content = obj['Body'].read().decode('utf-8')
-        print(content)
-
-        sentence_similarity = json.loads(content)
-    except Exception as e:
-        print(
-            'Exception in read_sentence_similarity_from_aws_s3: {0}'.format(e))
-        sentence_similarity = {}
-
-    return sentence_similarity
-
-
-def write_sentence_similarity_to_aws_s3(sentence_similarity):
-    try:
-        s3 = get_s3_connection()
-        s3.put_object(Bucket=get_s3_bucket(),
-                      Key=g_s3_sentence_similarity_file,
-                      Body=json.dumps(sentence_similarity).encode())
-    except Exception as e:
-        print(
-            'Exception in write_sentence_similarity_to_aws_s3: {0}'.format(e))
-
-
-def read_sentence_similarity_from_file():
-    sentence_similarity = {}
-    try:
-        if(sentence_similarity == None):
-            with open(model_indexes_path + model_index_reference_file, 'r') as json_file:
-                sentence_similarity = json.load(json_file)
-
-    except Exception as e:
-        print('Exception in read_sentence_similarity_from_file: {0}'.format(e))
-        sentence_similarity = {}
-
-    return sentence_similarity
-
-
-def write_to_sentence_similarity_file(sentence_similarity):
-    try:
-        if(sentence_similarity != None):
-            with open(model_indexes_path + model_index_reference_file, 'w+') as json_file:
-                json.dump(sentence_similarity, json_file, indent=2)
-
-    except Exception as e:
-        print('Exception in write_to_sentence_similarity_file: {0}'.format(e))
-        raise
-
 
 if __name__ == '__main__':
   app.run(host='0.0.0.0', port=1975, debug=True)
