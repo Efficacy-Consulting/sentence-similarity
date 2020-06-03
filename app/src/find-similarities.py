@@ -30,11 +30,17 @@ default_k = 10
 default_batch_size = 32
 default_num_trees = 10
 
-# g_columns = ['id', 'title', 'publication', 'content']
-g_columns = ['GUID', 'CONTENT', 'ENTITY']
+# for new articles (articles1.csv)
+g_columns = ['id', 'title', 'publication', 'content']
 g_id_index = 0
-g_content_index = 1
-g_content_key = 'CONTENT'
+g_content_index = 3
+g_content_key = 'content'
+
+# for short-wiki.csv
+  # g_columns = ['GUID', 'CONTENT', 'ENTITY']
+  # g_id_index = 0
+  # g_content_index = 1
+  # g_content_key = 'CONTENT'
 
 g_df_docs = None
 g_data_file = None
