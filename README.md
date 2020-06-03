@@ -29,18 +29,54 @@ This uses `flask` to expose the following endpoints at `port: 1975`
 
 `localhost:1975/train`
 
-`default-values`
+`example`
 ```
-  use_model = 'https://tfhub.dev/google/universal-sentence-encoder-large/3?tf-hub-format=compressed'
-  index_file = 'wiki.annoy.index'
-  vector_size = 512
+  trainingParams = {
+    model_name: 'wiki-annoy-use-2',
+    use_model: 'https://tfhub.dev/google/universal-sentence-encoder/2?tf-hub-format=compressed',
+    index_filename: 'wiki.annoy.use.2.index',
+    data_file: 'short-wiki.csv',
+    stop_words: false
+  }
 ```
 #### Note: Checkout the code to see other default values
 
-### Prediction
-2. Predict a sentence using `guid` (checkout `short-wiki.csv` for more details on `guid`).  (`method=POST`)
+### Search
+2.1. Search by string (checkout `short-wiki.csv` for more details).  (`method=POST`)
 
-  `localhost:1975/similarity/{guid}`
+  `localhost:1975/search/{params}`
+
+  `example`
+  ```
+    searchParams = {
+      search_string: 'new york',
+      index_filename: 'wiki.annoy.use.2.index',
+      use_model: 'https://tfhub.dev/google/universal-sentence-encoder/2?tf-hub-format=compressed',
+      data_file: 'short-wiki.csv',
+      vector_size: 'size-of-the-vector' (default: 512)
+    }
+  ```
+
+
+#### Note: You have to use the same annoy index and model (that was trained) with for the best results
+
+
+
+### Similar Documents
+2.2. Find similar documents using `guid` (checkout `short-wiki.csv` for more details on `guid`).  (`method=POST`)
+
+  `localhost:1975/similarity/{params}`
+
+  `example`
+  ```
+    searchParams = {
+      guid: 'music-wikipedia',
+      index_filename: 'wiki.annoy.use.2.index',
+      use_model: 'https://tfhub.dev/google/universal-sentence-encoder/2?tf-hub-format=compressed',
+      data_file: 'short-wiki.csv',
+      vector_size: 'size-of-the-vector' (default: 512)
+    }
+  ```
 
 #### Note: You have to use the same annoy index and model (that was trained) with for the best results
 

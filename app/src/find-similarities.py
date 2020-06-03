@@ -60,21 +60,55 @@ def home():
 
 @app.route('/get-model-indexes', methods=['GET'])
 def get_model_indexes():
+  """Get all trained model in the same structure that was passed during training process
+  :return: List of trained models if any, else empty list
+  """
+
   print('get_model_indexes')
   result = get_index_files()
   return json.dumps(result)
 
-
-@app.route('/train', methods=['GET', 'POST'])
+@app.route('/train', methods=['POST'])
 def train_model():
+  """Train the given model
+  :param params: {
+    model_name: 'name-of-the-model',
+    use_model: 'googles-tfhub-model-url',
+    index_filename: 'name-of-the-annoy-index-filename',
+    data_file: 'data-source-that-needs-to-be-trained',
+    vector_size: 'size-of-the-vector' (default: 512),
+    stop_words: boolean (default: False),
+    default_batch_size': Numeric (default: 32)
+  }
+  :return: success - result object with success message, 
+            failure - result object with error message
+  """
   params = request.get_json()
   print('train_model', params)
   result = train(params)
   return json.dumps(result)
 
 
-@app.route('/search', methods=['GET', 'POST'])
+@app.route('/search', methods=['POST'])
 def search_string():
+  """Find similar documents given a source search string
+  :param params: {
+    input_search_string: 'string-to-search',
+    model_name: 'name-of-the-model',
+    use_model: 'googles-tfhub-model-url',
+    use_updated_model: Boolean (default: False): Set it to true to force download the new model,
+    index_filename: 'name-of-the-annoy-index-filename',
+    data_file: 'data-source-that-needs-to-be-trained',
+    data_file_updated: Boolean (default: False): Set it to true if the data source is updated, so that the application will not take it from cache
+    vector_size: 'size-of-the-vector' (default: 512),
+    stop_words: boolean (default: False),
+    default_batch_size': Numeric (default: 32),
+    num_trees: Numeric (default: 10),
+    k: Numeric (default: 10)
+  }
+  :return: success - result object with success message, 
+            failure - result object with error message
+  """
   params = request.get_json()
   print('search_string', params)
   result = search(params)
@@ -83,6 +117,24 @@ def search_string():
 
 @app.route('/similarity', methods=['POST'])
 def predict_sentence():
+  """Find similar documents given a source document id
+  :param params: {
+    guid: 'source-document-id',
+    model_name: 'name-of-the-model',
+    use_model: 'googles-tfhub-model-url',
+    use_updated_model: Boolean (default: False): Set it to true to force download the new model,
+    index_filename: 'name-of-the-annoy-index-filename',
+    data_file: 'data-source-that-needs-to-be-trained',
+    data_file_updated: Boolean (default: False): Set it to true if the data source is updated, so that the application will not take it from cache
+    vector_size: 'size-of-the-vector' (default: 512),
+    stop_words: boolean (default: False),
+    default_batch_size': Numeric (default: 32),
+    num_trees: Numeric (default: 10),
+    k: Numeric (default: 10)
+  }
+  :return: success - result object with success message, 
+            failure - result object with error message
+  """
   params = request.get_json()
   result = predict(params)
   return json.dumps(result)
