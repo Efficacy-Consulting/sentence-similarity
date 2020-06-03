@@ -42,7 +42,7 @@ This uses `flask` to expose the following endpoints at `port: 1975`
 #### Note: Checkout the code to see other default values
 
 ### Search
-2.1. Search by string (checkout `short-wiki.csv` for more details).  (`method=POST`)
+2. Search by string (checkout `short-wiki.csv` for more details).  (`method=POST`)
 
   `localhost:1975/search/{params}`
 
@@ -63,7 +63,7 @@ This uses `flask` to expose the following endpoints at `port: 1975`
 
 
 ### Similar Documents
-2.2. Find similar documents using `guid` (checkout `short-wiki.csv` for more details on `guid`).  (`method=POST`)
+3. Find similar documents using `guid` (checkout `short-wiki.csv` for more details on `guid`).  (`method=POST`)
 
   `localhost:1975/similarity/{params}`
 
@@ -81,7 +81,7 @@ This uses `flask` to expose the following endpoints at `port: 1975`
 #### Note: You have to use the same annoy index and model (that was trained) with for the best results
 
 ### Get list of trained indexes from model
-3. All the indexes (trained with particular model) is stored in the local hard drive inside `model-indexes` folder, this endpoints returns a list object with information about the model and indexes. This information can be used for prediction. (`method=GET`)
+4. All the indexes (trained with particular model) is stored in the local hard drive inside `model-indexes` folder, this endpoints returns a list object with information about the model and indexes. This information can be used for prediction. (`method=GET`)
 
     `localhost:1975/get-model-indexes`
 
